@@ -36,6 +36,9 @@
 // Backlight Pin. Sadly pin 7 does not do pwm. We can bit bang it if we need to.
 #define lcdBacklight  7
 
+#define MANUFACTURER_ID 0x5050
+#define APPEARANCE_DC25 0x19DC
+
 // When we setup the NeoPixel library, we tell it how many pixels, and which pin to use to send signals.
 // Note that for older NeoPixel strips you might need to change the third parameter--see the strandtest
 // example for more information on possible values.
@@ -49,8 +52,6 @@ const int button3Pin = 4;
 const int button4Pin = 3;
 
 // Setup BTLE Stuff
-BLEPeripheral blePeripheral;
-BLEService bleService();
 BLEDevice bleDevice;
 
 // NeoPixel Stuff
@@ -77,32 +78,19 @@ void setup() {
   //Configure serial debugging
   Serial.begin(9600);
 
-  //Setup unsigned char string for manufacturer id.
-  //PP is 0x5050 in hex...
-  String manDataString = "PP";
-  int strLength = sizeof(manDataString);
-  unsigned char manData[100];
-  for (int i = 0; i < strLength; i++) {
-    manData[i] = manDataString[i];
-  }
+  unsigned char manData[2];
+  manData[0] = MANUFACTURER_ID & 0xFF;
+  manData[1] = (MANUFACTURER_ID >> 8) & 0xFF;
 
   //BLE Device Initialization
   //NOTE: This is required to work with other DC Badges
-  bleDevice.setAppearance(0);
-  bleDevice.setManufacturerData(manData , 2);
+  bleDevice.setAppearance(APPEARANCE_DC25);
+  bleDevice.setManufacturerData(manData , sizeof(manData));
   bleDevice.setLocalName("DCZia");
-  bleDevice.setDeviceName("DCZia");
-
-  //BLE Peripheral Service Initialization
-  blePeripheral.setLocalName("DCZia");
-  blePeripheral.setDeviceName("DCZia");
-  blePeripheral.setAdvertisedServiceUuid("66200011223344556677080944435A494121");
-  blePeripheral.setAppearance(0x19DC);
-
+  
   // BLE advertise the service
-  bleDevice.advertise();
   bleDevice.begin();
-  blePeripheral.begin();
+  bleDevice.advertise();
 
   // This initializes the NeoPixel library.
   pixels.begin();
